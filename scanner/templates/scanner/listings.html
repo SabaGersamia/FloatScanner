@@ -1,0 +1,256 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FloatScanner</title>
+    <link rel="stylesheet" href="{% static 'scanner/css/listings.css' %}">
+    <style>
+        .item-img {
+            width: 64px;
+            height: 48px;
+            object-fit: contain;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GeRsO's Listings</h1>
+        <div class="filter-controls">
+            <form method="GET" class="filter-form">
+
+                <div class="filter-group">
+                    <label for="{{ form.username.id_for_label }}">Search User:</label>
+                    {{ form.username }}
+                </div>
+
+                <div class="filter-group">
+                    <label for="{{ form.min_price.id_for_label }}">Price:</label>
+                    {{ form.min_price }}
+                    <span>-</span>
+                    {{ form.max_price }}
+                </div>
+
+                <div class="filter-group">
+                    <label for="{{ form.min_steam_level.id_for_label }}">Steam Level:</label>
+                    {{ form.min_steam_level }}
+                    <span>-</span>
+                    {{ form.max_steam_level }}
+                </div>
+                <div class="filter-group">
+                    <label for="{{ form.min_cs2_hours.id_for_label }}">CS2 Hours:</label>
+                    {{ form.min_cs2_hours }}
+                    <span>-</span>
+                    {{ form.max_cs2_hours }}
+                </div>
+                <div class="filter-group">
+                    <label for="{{ form.min_total_trades.id_for_label }}">Trades:</label>
+                    {{ form.min_total_trades }}
+                    <span>-</span>
+                    {{ form.max_total_trades }}
+                </div>
+                
+                <div class="filter-group country-filter-group">
+                    <label for="{{ form.country.id_for_label }}">Country:</label>
+                    {{ form.country }}
+                </div>
+
+                <div class="filter-buttons">
+                    <button type="submit" class="filter-btn">Filter</button>
+                    <button type="button" class="clear-filters-btn" onclick="window.location.href='{% url 'listings' %}'">Clear Filters</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="listings-grid">
+            {% for listing in listings %}
+            <div class="listing-card" data-listing-id="{{ listing.id }}" data-steam-id="{{ listing.seller.steam_id }}">
+                <div class="listing-left-section">
+                    <div class="item-visuals">
+                        <img src="{{ listing.item.get_image_url }}"
+                            alt="{{ listing.item.market_hash_name }}"
+                            class="item-img"
+                            loading="lazy"
+                            onerror="this.onerror=null;this.src='{% static 'scanner/images/placeholder.png' %}';">
+                    </div>
+                </div>
+
+                <div class="listing-main-content">
+                    <div class="item-details">
+                        <div class="item-name">{{ listing.item.market_hash_name }}</div>
+                        <div class="item-tags">
+                            {% if listing.item.is_stattrak %}
+                                <span class="badge badge-stattrak">ST</span>
+                            {% endif %}
+                            {% if listing.item.is_souvenir %}
+                                <span class="badge badge-souvenir">SV</span>
+                            {% endif %}
+                            {% if listing.item.float_value %}
+                                <span class="item-float">{{ listing.item.float_value|floatformat:6 }} Float</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="item-pricing">
+                        <span class="price">${{ listing.price|floatformat:"0" }}</span>
+                    </div>
+
+                    <div class="seller-details-combined">
+                        <img src="{{ listing.seller.avatar|default:'/static/scanner/images/default_avatar.png' }}"
+                            alt="{{ listing.seller.username }}"
+                            class="seller-avatar"
+                            loading="lazy"
+                            onerror="this.onerror=null;this.src='{% static 'scanner/images/default_avatar.png' %}';">
+
+                        <div class="seller-info-frame">
+                            <a href="https://steamcommunity.com/profiles/{{ listing.seller.steam_id }}"
+                                class="seller-profile-link"
+                                target="_blank"
+                                rel="noopener noreferrer">
+                                <span class="seller-name-wrapper">
+                                    <span class="seller-username">{{ listing.seller.username }}</span>
+                                    {% if listing.seller.is_online %}
+                                        <span class="online-indicator online" title="Online"></span>
+                                    {% else %}
+                                        <span class="online-indicator offline" title="Offline"></span>
+                                    {% endif %}
+                                </span>
+                                    {% if listing.seller.country %}
+                                    <span class="country-info">
+                                        <img src="{% static 'scanner/flags/'|add:listing.seller.country|lower|add:'.png' %}"
+                                            alt="{{ listing.seller.country }}"
+                                            class="country-flag"
+                                            title="{{ listing.seller.country|upper }}"
+                                            onerror="this.onerror=null;this.style.display='none';">
+                                        <span class="country-code">{{ listing.seller.country|upper }}</span>
+                                    </span>
+                                    {% endif %}
+                                    {% if listing.seller.steam_level %}
+                                    <span class="steam-level">Level {{ listing.seller.steam_level }}</span>
+                                    {% endif %}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="seller-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Acc Age:</span>
+                            <span class="stat-value">
+                                {% if listing.seller.account_age_years %}
+                                    {{ listing.seller.account_age_years }} Years
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">CS2 Hrs:</span>
+                            <span class="stat-value">
+                                {% if listing.seller.cs2_hours %}
+                                    {{ listing.seller.cs2_hours|floatformat:"0" }} Hrs
+                                {% else %}
+                                    Private
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">CSfloat Trades:</span>
+                            <span class="stat-value">
+                                {% if listing.seller.total_trades is not None %} 
+                                    {{ listing.seller.total_trades }}
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            {% empty %}
+            <div class="no-listings">No listings found</div>
+            {% endfor %}
+        </div>
+
+        <div class="pagination">
+            <span class="step-links">
+                {% if listings.has_previous %}
+                    <a href="?page=1{% for key, value in current_params.items %}&{{ key }}={{ value }}{% endfor %}">&laquo; first</a>
+                    <a href="?page={{ listings.previous_page_number }}{% for key, value in current_params.items %}&{{ key }}={{ value }}{% endfor %}">previous</a>
+                {% else %}
+                    <span class="disabled">&laquo; first</span>
+                    <span class="disabled">previous</span>
+                {% endif %}
+
+                <span class="current">
+                    Page {{ listings.number }} of {{ listings.paginator.num_pages }}.
+                </span>
+
+                {% if listings.has_next %}
+                    <a href="?page={{ listings.next_page_number }}{% for key, value in current_params.items %}&{{ key }}={{ value }}{% endfor %}">next</a>
+                    <a href="?page={{ listings.paginator.num_pages }}{% for key, value in current_params.items %}&{{ key }}={{ value }}{% endfor %}">last &raquo;</a>
+                {% else %}
+                    <span class="disabled">next</span>
+                    <span class="disabled">last &raquo;</span>
+                {% endif %}
+            </span>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const listingCards = document.querySelectorAll('.listing-card');
+            const clickedListingIDs = new Set(JSON.parse(localStorage.getItem('clickedListingIDs') || '[]'));
+            const profileVisitedSteamIDs = new Set(JSON.parse(localStorage.getItem('profileVisitedSteamIDs') || '[]'));
+
+            listingCards.forEach(card => {
+                const listingId = card.dataset.listingId;
+                const steamId = card.dataset.steamId;
+
+                if (listingId && clickedListingIDs.has(listingId)) {
+                    card.classList.add('clicked');
+                }
+                if (steamId && profileVisitedSteamIDs.has(steamId)) {
+                    card.classList.add('profile-visited');
+                }
+            });
+
+            listingCards.forEach(card => {
+                card.addEventListener('click', function(event) {
+                    if (event.target.closest('.seller-profile-link') || event.target.closest('.inspect-link')) {
+                        return;
+                    }
+
+                    const listingId = this.dataset.listingId;
+                    if (listingId) {
+                        this.classList.toggle('clicked');
+                        if (this.classList.contains('clicked')) {
+                            clickedListingIDs.add(listingId);
+                        } else {
+                            clickedListingIDs.delete(listingId);
+                        }
+                        localStorage.setItem('clickedListingIDs', JSON.stringify(Array.from(clickedListingIDs)));
+                    }
+                });
+            });
+
+            const sellerProfileLinks = document.querySelectorAll('.seller-profile-link');
+            sellerProfileLinks.forEach(link => {
+                link.addEventListener('click', function(event) {
+                    const card = this.closest('.listing-card');
+                    if (card) {
+                        const steamId = card.dataset.steamId;
+                        if (steamId) {
+                            card.classList.add('profile-visited');
+                            profileVisitedSteamIDs.add(steamId);
+                            localStorage.setItem('profileVisitedSteamIDs', JSON.stringify(Array.from(profileVisitedSteamIDs)));
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
